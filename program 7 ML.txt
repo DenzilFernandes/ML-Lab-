@@ -1,0 +1,38 @@
+
+
+import bayespy as bp
+import numpy as np
+import csv
+
+a = {'SuperSeniorCitizen':0, 'SeniorCitizen':1, 'MiddleAged':2, 'Youth':3,'Teen':4}
+b = {'Male':0, 'Female':1}
+c = {'Yes':0, 'No':1}
+d = {'High':0, 'Medium':1, 'Low':2}
+e = {'Athlete':0, 'Active':1, 'Moderate':2, 'Sedetary':3}
+f = {'High':0, 'BorderLine':1, 'Normal':2}
+g = {'Yes':0, 'No':1}
+
+dataset = list(csv.reader(open('desktop/lab stuff/ml/7_ml.csv')))
+
+data = [ [ a[x[0]],b[x[1]],c[x[2]],d[x[3]],e[x[4]],f[x[5]],g[x[6]] ] for x in dataset]
+
+data = np.array(data)
+
+n = len(dataset)
+attr = [5,2,2,3,4,3]
+arr = ['?' for _ in range(6)]
+
+for i in range(6):
+    x = bp.nodes.Dirichlet(1.0*np.ones(attr[i]))
+    arr[i] = bp.nodes.Categorical(x , plates=(n,))
+    arr[i].observe(data[:,i])
+
+x = bp.nodes.Dirichlet(np.ones(2), plates=(5, 2, 2, 3, 4, 3))
+hd = bp.nodes.MultiMixture( arr , bp.nodes.Categorical, x)
+hd.observe(data[:,6])
+
+query = [int(input()) for i in range(6)]
+
+res = bp.nodes.MultiMixture(query, bp.nodes.Categorical, x).get_moments()[0][0]
+print("Probability(HeartDisease) = " ,res)
+
